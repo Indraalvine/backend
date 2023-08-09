@@ -14,6 +14,7 @@ module.exports = {
       },
       user_id: {
         type: Sequelize.INTEGER,
+        allowNull: false
       },
       firstname: {
         type: Sequelize.STRING,

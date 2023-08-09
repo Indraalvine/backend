@@ -1,9 +1,11 @@
 const {postNew} = require("../models");
+const {where} = require("sequelize")
 
 const create = async (req, res) => {
     try{
-        const id = req.user;
-        const { title, body} = req.body;
+        const { id } = req.user.id;
+        console.log(id)
+        const { title, body, user_id } = req.body;
 
         if(!title || !body) {
             return res.status(400).send({
@@ -11,8 +13,8 @@ const create = async (req, res) => {
             })
         }
 
-        const input = await postNew.create({
-            user_id: id,
+        const createPost = await postNew.create({
+            user_id: user_id,
             title: title,
             body:body
         })
@@ -29,16 +31,17 @@ const create = async (req, res) => {
 
 const update = async (req, res) => {
     try{
-        const { id, title, body} = req.body
+        const { title, body} = req.body
+        const { id } = req.user.id;
 
         const updatedData = await postNew.update({
             user_id: id,
             title:title,
             body:body
-        }, {where : {title:title}})
+        }, {where: {id : user_id}})
 
         const data = await postNew.findOne({
-            where: { title:title }
+            where : { id: user_id }
         })
 
           res.status(200).send({
@@ -57,9 +60,9 @@ const update = async (req, res) => {
 
         const deletePost = async (req,res)=>{
             try{
-                const {title} = req.body
+                const {user_id} = req.body
             const deletePost = await postNew.destroy({
-                where: {title:title}
+                where: { id : user_id}
             })
             res.status(200).send({
                 message: "post deleted",

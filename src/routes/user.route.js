@@ -19,8 +19,8 @@ const router = express.Router();
 
 router.post("/", create);
 router.post("/login", login);
-router.put("/update", update);
-router.delete("/delete", deleteUser);
+router.put("/update", verifyToken ,update);
+router.delete("/delete", verifyToken ,deleteUser);
 
 router.post("/upload", upload.single("profilepic"), uploadPic);
 router.put("/changepassword", changepassword);

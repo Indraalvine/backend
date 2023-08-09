@@ -2,6 +2,7 @@ const knexQuery = require("../modelknex/knex");
 const { userNew } = require("../models");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { where } = require('sequelize')
 
 const create = async (req, res) => {
 
@@ -36,86 +37,78 @@ const create = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  try {
-    const { username, password } = req.body;
+	try {
+		const {username, password} = req.body
 
-    if (!password || !username) {
-      return res.status(400).send({
-        message: "must be filled",
-      });
-    }
+		if (!password || !username) {
+			return res.status(400).send({
+				message: `some field must be filled, cannot be empty`
+			})
+		}
 
-    const getUser = await userNew.findOne({
-      where: { username: username },
-    });
-    if (!getUser) {
-      return res.status(404).send({
-        message: "user " + username + " not found",
-      });
-    }
+		const getUser = await userNew.findOne({
+			where: {username: username}
+		})
 
-    const isValidPassword = bcrypt.compareSync(
-      password,
-      getUser.dataValues.password
-    );
+		if (!getUser) {
+			return res.status(404).send({
+				message: 'User ' + username + ' not found'
+			})
+		}
 
-    if (!isValidPassword) {
-      return res.status(400).send({
-        message: "invalid password",
-      });
-    }
+		const isValidPassword = bcrypt.compareSync(password, getUser.dataValues.password)
 
-    const token = jwt.sign(
-      {
-        id: getUser.dataValues.id,
-        username: getUser.dataValues.username,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: 3600 }
-    );
+		if (!isValidPassword) {
+			return res.status(400).send({
+				message: 'Invalid Password'
+			})
+		}
 
-    return res.status(200).send({
-      message: "login success",
-      token: token
-    });
-  } catch (error) {
-    console.log(error);
-    return res.send({
-      message: "error",
-      data: error,
-    });
-  }
-};
+		const token = jwt.sign({
+			id: getUser.dataValues.id,
+			username: getUser.dataValues.username
+		}, process.env.JWT_SECRET, {expiresIn: 3600})
+
+		return res.status(200).send({
+			message: 'login success',
+			token: token
+		})
+
+	} catch (error) {
+		console.log(error)
+		return res.send({
+			message: 'error occured',
+			data: error
+		})
+	}
+}
+
 
 const update = async (req, res) => {
-  try {
-    const { nama_depan, nama_belakang, username } = req.body;
+	try {
+		const idUser = req.user.id
+		const {nama_depan, nama_belakang, username} = req.body
 
-    const updatedData = await userNew.update(
-      {
-        firstname: nama_depan,
-        lastname: nama_belakang,
-        username: username,
-      },
-      { where: { username: username } }
-    );
+		const updatedData = await userNew.update({
+			firstname: nama_depan,
+			lastname: nama_belakang,
+			username: username}, { where : {id: idUser}})
 
-    const data = await userNew.findOne({
-      where: { username: username },
-    });
-
-    res.status(201).send({
-      message: "user updated",
-      data: data,
-    });
-  } catch (error) {
-    console.log(error)
-    return res.send({
-      message: "error",
-      data: error,
-    });
-  }
-};
+		const data = await userNew.findOne({
+			where: {id: idUser}
+		})
+		res.status(201).send({
+			message: 'user updated',
+			data: data
+		})
+	} catch (error) {
+		console.log(error)
+		return res.send({
+			message: 'error occured',
+			data: error
+		})
+	}
+}
 
 const deleteUser = async (req, res) => {
   try {
